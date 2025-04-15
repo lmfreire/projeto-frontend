@@ -44,16 +44,22 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             >
               Fabricantes
             </Link>
+            <Link
+              href="/vendas"
+              className="block px-4 py-2 rounded hover:bg-gray-700"
+            >
+              Venda
+            </Link>
           </nav>
 
           <div className="p-4 border-t border-gray-700">
-          <button
-            onClick={handleLogout}
-            className="cursor-pointer w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-semibold rounded-md shadow transition duration-200"
-          >
-            <FiLogOut className="text-lg" />
-            Sair
-          </button>
+            <button
+              onClick={handleLogout}
+              className="cursor-pointer w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-semibold rounded-md shadow transition duration-200"
+            >
+              <FiLogOut className="text-lg" />
+              Sair
+            </button>
           </div>
         </div>
       </aside>

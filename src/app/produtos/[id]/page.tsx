@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import api from '@/services/api';
 import { ProdutoItemForm } from '../components/ProdutoItemForm';
+import { validateTokenAndRedirect } from '../../../utils/auth';
 
 export default function ProdutoItensPage() {
   const { id } = useParams();
@@ -16,16 +17,27 @@ export default function ProdutoItensPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const isValid = await validateTokenAndRedirect(router);
+      if (!isValid) {
+        console.log("Token inválido. Redirecionando para a página inicial.");
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
+  useEffect(() => {
     fetchProduto();
     fetchItens();
   }, []);
 
   const fetchProduto = async () => {
-    const { data } = await api.get(`/produto/${empresaId}`, {
+    const { data } = await api.get(`/produto/${empresaId}/${produtoId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    const prod = data.find((p: any) => p.id === produtoId);
-    setProduto(prod);
+    // const prod = data.find((p: any) => p.id === produtoId);
+    setProduto(data);
   };
 
   const fetchItens = async () => {
@@ -46,16 +58,18 @@ export default function ProdutoItensPage() {
       <p className="mb-4 text-gray-600">Preço: R$ {produto.precoVenda}</p>
 
       <h2 className="text-xl font-semibold mb-2">Itens do Produto</h2>
-      <ul className="grid grid-cols-2 gap-4 mb-6">
-        {itens.map((item) => (
-          <li key={item.id} className="bg-white p-4 rounded shadow">
-            <p><strong>Código:</strong> {item.codigo}</p>
-            <p><strong>Descrição:</strong> {item.descricao}</p>
-            <p><strong>Complemento:</strong> {item.complemento}</p>
-            <p><strong>GTIN:</strong> {item.codigogtin}</p>
-          </li>
-        ))}
-      </ul>
+      <div className="max-h-[70vh] overflow-y-auto pr-2">
+        <ul className="grid grid-cols-2 gap-4 mb-6">
+          {itens.map((item) => (
+            <li key={item.id} className="bg-white p-4 rounded shadow">
+              <p><strong>Código:</strong> {item.codigo}</p>
+              <p><strong>Descrição:</strong> {item.descricao}</p>
+              <p><strong>Complemento:</strong> {item.complemento}</p>
+              <p><strong>GTIN:</strong> {item.codigogtin}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       <button
         onClick={() => setIsModalOpen(true)}

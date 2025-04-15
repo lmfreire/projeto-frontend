@@ -1,6 +1,23 @@
 "use client";
 
+import { useRouter } from "next/navigation"; 
+import { useEffect } from "react";
+import { validateTokenAndRedirect } from "../../utils/auth";
+
 export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const isValid = await validateTokenAndRedirect(router);
+      if (!isValid) {
+        console.log("Token inválido. Redirecionando para a página inicial.");
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+  
   return (
     <div className="flex items-center justify-center min-h-screen bg-white text-gray-800">
       <div className="w-full max-w-3xl p-8 bg-gray-100 rounded-lg shadow-lg">

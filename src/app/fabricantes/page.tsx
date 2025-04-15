@@ -62,20 +62,22 @@ export default function FabricantesPage() {
       >
         Novo Fabricante
       </button>
-      <ul className="space-y-4">
-        {fabricantes.length > 0 ? (
-          fabricantes.map((fabricante: any) => (
-            <li
-              key={fabricante.id}
-              className="p-4 bg-white shadow rounded"
-            >
-              <h2 className="text-lg font-semibold">{fabricante.nome}</h2>
-            </li>
-          ))
-        ) : (
-          <p className="text-gray-500">Nenhum fabricante encontrado.</p>
-        )}
-      </ul>
+      <div className="max-h-[65vh] overflow-y-auto pr-2">
+        <ul className="space-y-4">
+          {fabricantes.length > 0 ? (
+            fabricantes.map((fabricante: any) => (
+              <li
+                key={fabricante.id}
+                className="p-4 bg-white shadow rounded"
+              >
+                <h2 className="text-lg font-semibold">{fabricante.nome}</h2>
+              </li>
+            ))
+          ) : (
+            <p className="text-gray-500">Nenhum fabricante encontrado.</p>
+          )}
+        </ul>
+      </div>
 
       {/* Modal */}
       {isModalOpen && (

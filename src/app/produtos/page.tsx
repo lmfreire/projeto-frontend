@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useProdutoData } from './hooks/useProdutoData';
 import api from '@/services/api';
+import { useRouter } from 'next/navigation';
+import { validateTokenAndRedirect } from '../../utils/auth';
 
 export default function ProdutosPage() {
   const { produtos, fetchProdutos } = useProdutoData();
@@ -13,6 +15,18 @@ export default function ProdutosPage() {
   const [fabricantes, setFabricantes] = useState([]);
   const empresaId = localStorage.getItem('empresa_id');
   const token = localStorage.getItem('token_project');
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const isValid = await validateTokenAndRedirect(router);
+      if (!isValid) {
+        console.log("Token inválido. Redirecionando para a página inicial.");
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   useEffect(() => {
     const fetchFabricantes = async () => {
@@ -63,23 +77,25 @@ export default function ProdutosPage() {
       >
         Novo Produto
       </button>
-      <ul className="space-y-4">
-        {produtos.map((produto: any) => (
-          <li key={produto.id} className="p-4 bg-white shadow rounded">
-            <h2 className="text-lg font-semibold">{produto.nome}</h2>
-            <p className="text-gray-600">Estoque: {produto.estoque}</p>
-            <p className="text-gray-600">Preço: {produto.precoVenda}</p>
-            <Link
-              href={`/produtos/${produto.id}`}
-              className="cursor-pointer mt-2 inline-block text-blue-600 hover:underline"
-            >
-              Ver itens
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <div className="max-h-[65vh] overflow-y-auto pr-2">
+        <ul className="space-y-4">
+          {produtos.map((produto: any) => (
+            <li key={produto.id} className="p-4 bg-white shadow rounded">
+              <h2 className="text-lg font-semibold">{produto.nome}</h2>
+              <p className="text-gray-600">Estoque: {produto.estoque}</p>
+              <p className="text-gray-600">Preço: {produto.precoVenda}</p>
+              <Link
+                href={`/produtos/${produto.id}`}
+                className="cursor-pointer mt-2 inline-block text-blue-600 hover:underline"
+              >
+                Ver itens
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-      {/* Modal */}
+
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
           <div className="bg-white p-6 rounded shadow-lg w-[400px]">
