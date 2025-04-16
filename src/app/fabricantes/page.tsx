@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import api from "../../services/api";
+import { validateTokenAndRedirect } from "../../utils/auth";
+import { useRouter } from "next/navigation";
 
 export default function FabricantesPage() {
   const [fabricantes, setFabricantes] = useState([]);
@@ -8,6 +10,18 @@ export default function FabricantesPage() {
   const [nomeFabricante, setNomeFabricante] = useState("");
   const empresaId = localStorage.getItem("empresa_id");
   const token = localStorage.getItem("token_project");
+  const router = useRouter();
+
+  useEffect(() => {
+      const checkAuth = async () => {
+        const isValid = await validateTokenAndRedirect(router);
+        if (!isValid) {
+          console.log("Token inválido. Redirecionando para a página inicial.");
+        }
+      };
+  
+      checkAuth();
+    }, [router]);
 
   useEffect(() => {
     if (empresaId) {
