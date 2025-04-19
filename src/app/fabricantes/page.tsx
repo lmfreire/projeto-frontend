@@ -8,26 +8,34 @@ export default function FabricantesPage() {
   const [fabricantes, setFabricantes] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [nomeFabricante, setNomeFabricante] = useState("");
-  const empresaId = localStorage.getItem("empresa_id");
-  const token = localStorage.getItem("token_project");
+  const [empresaId, setEmpresaId] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-      const checkAuth = async () => {
-        const isValid = await validateTokenAndRedirect(router);
-        if (!isValid) {
-          console.log("Token inválido. Redirecionando para a página inicial.");
-        }
-      };
-  
-      checkAuth();
-    }, [router]);
+    // Acessa o localStorage no lado do cliente
+    const storedEmpresaId = localStorage.getItem("empresa_id");
+    const storedToken = localStorage.getItem("token_project");
+    setEmpresaId(storedEmpresaId);
+    setToken(storedToken);
+  }, []);
 
   useEffect(() => {
-    if (empresaId) {
+    const checkAuth = async () => {
+      const isValid = await validateTokenAndRedirect(router);
+      if (!isValid) {
+        console.log("Token inválido. Redirecionando para a página inicial.");
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
+  useEffect(() => {
+    if (empresaId && token) {
       fetchFabricantes();
     }
-  }, [empresaId]);
+  }, [empresaId, token]);
 
   const fetchFabricantes = async () => {
     try {
