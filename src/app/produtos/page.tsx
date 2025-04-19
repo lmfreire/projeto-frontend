@@ -1,27 +1,36 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useProdutoData } from './hooks/useProdutoData';
 import api from '@/services/api';
 import { useRouter } from 'next/navigation';
 import { validateTokenAndRedirect } from '../../utils/auth';
 
 export default function ProdutosPage() {
-  const { produtos, fetchProdutos } = useProdutoData();
+  const [produtos, setProdutos] = useState<any[]>([]);
+  const [fabricantes, setFabricantes] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [nome, setNome] = useState('');
   const [precoVenda, setPrecoVenda] = useState('');
   const [fabricanteId, setFabricanteId] = useState('');
-  const [fabricantes, setFabricantes] = useState([]);
-  const empresaId = localStorage.getItem('empresa_id');
-  const token = localStorage.getItem('token_project');
+  const [empresaId, setEmpresaId] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const router = useRouter();
+
+  useEffect(() => {
+    // Acessa o localStorage no lado do cliente
+    const storedEmpresaId = localStorage.getItem('empresa_id');
+    const storedToken = localStorage.getItem('token_project');
+    setEmpresaId(storedEmpresaId);
+    setToken(storedToken);
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
       const isValid = await validateTokenAndRedirect(router);
       if (!isValid) {
-        console.log("Token inválido. Redirecionando para a página inicial.");
+        console.log('Token inválido. Redirecionando para a página inicial.');
       }
     };
 
@@ -29,7 +38,15 @@ export default function ProdutosPage() {
   }, [router]);
 
   useEffect(() => {
+    if (empresaId && token) {
+      fetchProdutos(pageNumber);
+    }
+  }, [empresaId, token, pageNumber]);
+
+  useEffect(() => {
     const fetchFabricantes = async () => {
+      if (!empresaId || !token) return;
+
       try {
         const { data } = await api.get(`/fabricante/${empresaId}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -43,8 +60,25 @@ export default function ProdutosPage() {
     fetchFabricantes();
   }, [empresaId, token]);
 
+  const fetchProdutos = async (page: number) => {
+    if (!empresaId || !token) return;
+
+    try {
+      const { data } = await api.get(`/produto/${empresaId}?page=${page}&limit=10`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setProdutos(data.data); // Atualiza a lista de produtos
+      setTotalPages(Math.ceil(data.total / data.limitNumber)); // Calcula o total de páginas
+    } catch (err) {
+      console.error('Erro ao buscar produtos:', err);
+    }
+  };
+
   const handleCreateProduto = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!empresaId || !token) return;
+
     try {
       await api.post(
         '/produto',
@@ -62,9 +96,15 @@ export default function ProdutosPage() {
       setPrecoVenda('');
       setFabricanteId('');
       setIsModalOpen(false);
-      fetchProdutos(); // Atualiza a lista de produtos
+      fetchProdutos(pageNumber); // Atualiza a lista de produtos na página atual
     } catch (err) {
       console.error('Erro ao criar produto:', err);
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPageNumber(newPage);
     }
   };
 
@@ -95,6 +135,26 @@ export default function ProdutosPage() {
         </ul>
       </div>
 
+      {/* Paginação */}
+      <div className="flex justify-center items-center mt-4 space-x-2">
+        <button
+          onClick={() => handlePageChange(pageNumber - 1)}
+          disabled={pageNumber === 1}
+          className="cursor-pointer px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 disabled:opacity-50"
+        >
+          Anterior
+        </button>
+        <span className="text-gray-700">
+          Página {pageNumber} de {totalPages}
+        </span>
+        <button
+          onClick={() => handlePageChange(pageNumber + 1)}
+          disabled={pageNumber === totalPages}
+          className="cursor-pointer px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 disabled:opacity-50"
+        >
+          Próxima
+        </button>
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">

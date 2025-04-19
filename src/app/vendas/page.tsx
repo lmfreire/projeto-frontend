@@ -40,7 +40,14 @@ export default function VendaPage() {
       const { data } = await api.get(`/venda/${empresaId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token_project")}` },
       });
-      setVendas(data);
+
+      // Ordena as vendas: abertas primeiro, fechadas depois
+      const vendasOrdenadas = data.sort((a: any, b: any) => {
+        if (a.finalizada === b.finalizada) return 0;
+        return a.finalizada ? 1 : -1; // Vendas abertas (false) vêm antes de fechadas (true)
+      });
+
+      setVendas(vendasOrdenadas);
     } catch (err) {
       console.error("Erro ao buscar vendas:", err);
     }
@@ -117,7 +124,9 @@ export default function VendaPage() {
             {vendas.map((venda: any) => (
               <li
                 key={venda.id}
-                className="p-4 bg-white shadow rounded cursor-pointer hover:bg-gray-100"
+                className={`p-4 rounded shadow cursor-pointer hover:bg-gray-100 ${
+                  venda.finalizada ? "bg-gray-200" : "bg-green-100"
+                }`}
                 onClick={() => handleVendaClick(venda)}
               >
                 <h2 className="text-lg font-semibold">{venda.descricao}</h2>
@@ -129,6 +138,13 @@ export default function VendaPage() {
                 </p>
                 <p className="text-gray-600">
                   <strong>Valor Total:</strong> R$ {Number(venda.valor_total).toFixed(2)}
+                </p>
+                <p
+                  className={`text-sm font-bold ${
+                    venda.finalizada ? "text-red-600" : "text-green-600"
+                  }`}
+                >
+                  {venda.finalizada ? "Fechada" : "Aberta"}
                 </p>
               </li>
             ))}

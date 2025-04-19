@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/services/api';
+import Select from 'react-select';
 import { validateTokenAndRedirect } from '../../../utils/auth';
 
 export default function VendaDetalhadaPage() {
@@ -16,6 +17,9 @@ export default function VendaDetalhadaPage() {
   const [desconto, setDesconto] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [loadingItem, setLoadingItem] = useState(false);
+  const [buscaProduto, setBuscaProduto] = useState<string>(''); // Campo de busca
+  const [produtoFiltrado, setProdutoFiltrado] = useState<any[]>([]); // Produtos filtrados
+
 
   useEffect(() => {
     const fetchVenda = async () => {
@@ -40,27 +44,34 @@ export default function VendaDetalhadaPage() {
       }
     };
 
-    const fetchProdutos = async () => {
+    const fetchProdutoItems = async () => {
       const empresaId = localStorage.getItem('empresa_id');
       const token = localStorage.getItem('token_project');
 
       if (!empresaId || !token) return;
 
       try {
-        const { data } = await api.get(`/produto/${empresaId}`, {
+        const { data } = await api.get(`/produto_item/${empresaId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // Filtra produtos com estoque > 0
-        const produtosComEstoque = data.filter((produto: any) => produto.estoque > 0);
-        setProdutos(produtosComEstoque);
+        console.log('Retorno da API /produto_item:', data); // Verifique o formato dos dados
+
+        if (Array.isArray(data)) {
+          setProdutos(data); // Atualiza o estado `produtos` com os produtoItem
+          setProdutoFiltrado(data); // Inicializa os produtos filtrados
+        } else {
+          console.error('Erro: O retorno da API não é uma lista de produtoItem.');
+          setProdutos([]);
+          setProdutoFiltrado([]);
+        }
       } catch (err) {
-        console.error('Erro ao buscar produtos:', err);
+        console.error('Erro ao buscar produtoItem:', err);
       }
     };
 
     fetchVenda();
-    fetchProdutos();
+    fetchProdutoItems();
   }, [id]);
 
   const handleAddItem = async (e: React.FormEvent) => {
@@ -84,6 +95,8 @@ export default function VendaDetalhadaPage() {
           },
         ],
       };
+
+      console.log('Payload para adicionar item:', payload); // Verifique o payload antes de enviar
 
       await api.post('/venda/item', payload, {
         headers: { Authorization: `Bearer ${token}` },
@@ -110,12 +123,12 @@ export default function VendaDetalhadaPage() {
     }
   };
 
-  const handleProdutoChange = (produtoId: number) => {
-    const produtoSelecionado = produtos.find((produto) => produto.id === produtoId);
+  const handleProdutoChange = (codigo: string) => {
+    const produtoSelecionado = produtos.find((produto) => produto.codigo === codigo);
     if (produtoSelecionado) {
-      setProdutoItemId(produtoId);
-      setValorUnitario(Number(produtoSelecionado.precoVenda));
-      setValorTotal(Number(produtoSelecionado.precoVenda) * quantidade - desconto);
+      setProdutoItemId(produtoSelecionado.codigo); // Define o código do produtoItem
+      setValorUnitario(Number(produtoSelecionado.produto.precoVenda)); // Usa o preço do produto associado
+      setValorTotal(Number(produtoSelecionado.produto.precoVenda) * quantidade - desconto);
     }
   };
 
@@ -127,6 +140,23 @@ export default function VendaDetalhadaPage() {
   const handleDescontoChange = (desconto: number) => {
     setDesconto(desconto);
     setValorTotal(valorUnitario * quantidade - desconto);
+  };
+
+  const handleBuscaProduto = (busca: string) => {
+    setBuscaProduto(busca);
+
+    // Certifique-se de que `produtos` é uma lista válida antes de aplicar o filtro
+    if (Array.isArray(produtos)) {
+      const produtosFiltrados = produtos.filter(
+        (produto: any) =>
+          produto.nome?.toLowerCase().includes(busca.toLowerCase()) || // Verifica o nome
+          produto.codigo?.toString().includes(busca) // Verifica o código
+      );
+      setProdutoFiltrado(produtosFiltrados); // Atualiza os produtos filtrados
+    } else {
+      console.error('Erro: `produtos` não é uma lista válida.');
+      setProdutoFiltrado([]); // Define uma lista vazia caso `produtos` não seja válido
+    }
   };
 
   const handleRemoveItem = async (vendaItemId: number) => {
@@ -166,30 +196,48 @@ export default function VendaDetalhadaPage() {
         ← Voltar para vendas
       </button>
 
+
       <h1 className="text-2xl font-bold mb-6">Detalhes da Venda</h1>
 
       <div className="max-h-[70vh] overflow-y-auto">
+        <div className="bg-gray-100 p-4 rounded shadow mb-6">
+          <h2 className="text-lg font-bold mb-2">Informações da Venda</h2>
+          <div className="flex gap-8">
+            <p>
+              <strong>Cliente:</strong> {vendaDetalhada?.cliente?.nome || 'Não informado'}
+            </p>
+            <p>
+              <strong>Valor Total:</strong> R$ {Number(vendaDetalhada?.valor_total || 0).toFixed(2)}
+            </p>
+          </div>
+        </div>
+
         {vendaDetalhada?.finalizada === false && (
           <form onSubmit={handleAddItem} className="bg-white p-6 rounded shadow mb-6 grid grid-cols-2 gap-4">
             <h2 className="text-lg font-bold col-span-2">Adicionar Item</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Produto</label>
-              <select
-                value={produtoItemId || ''}
-                onChange={(e) => handleProdutoChange(Number(e.target.value))}
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring focus:ring-blue-500"
-              >
-                <option value="" disabled>
-                  Selecione um produto
-                </option>
-                {produtos.map((produto) => (
-                  <option key={produto.id} value={produto.id}>
-                    {produto.nome} (Estoque: {produto.estoque})
-                  </option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-gray-700">Produto (buscar por nome ou código)</label>
+              <Select
+                options={produtos.map((produto) => ({
+                  value: produto.codigo,
+                  label: `${produto.produto.nome} - ${produto.codigo}`,
+                  produto,
+                }))}
+                onChange={(selectedOption) => {
+                  if (selectedOption) {
+                    const produtoSelecionado = selectedOption.produto;
+                    setProdutoItemId(produtoSelecionado.codigo);
+                    const preco = Number(produtoSelecionado.produto.precoVenda);
+                    setValorUnitario(preco);
+                    setValorTotal(preco * quantidade - desconto);
+                  }
+                }}
+                placeholder="Digite o nome ou código"
+                isSearchable
+                className="mt-1"
+              />
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">Quantidade</label>
               <input
@@ -245,7 +293,7 @@ export default function VendaDetalhadaPage() {
           {vendaDetalhada?.VendaItem.map((item: any) => (
             <li key={item.id} className="p-4 bg-white rounded shadow">
               <p>
-                <strong>Produto:</strong> {item.produtoItem.produto.nome}
+                <strong>Produto:</strong> {item.produtoItem.produto.nome} - {item.produtoItem.codigo}
               </p>
               <p>
                 <strong>Quantidade:</strong> {item.quantidade}
