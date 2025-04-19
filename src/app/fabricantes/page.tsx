@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useEffect, useState } from "react";
 import api from "../../services/api";
 import { validateTokenAndRedirect } from "../../utils/auth";
