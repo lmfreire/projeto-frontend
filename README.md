@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sistema de Gestão de Vendas e Produtos
 
-## Getting Started
+Este é um projeto desenvolvido com [Next.js](https://nextjs.org), criado para facilitar a gestão de vendas, produtos, fabricantes e clientes. O sistema oferece uma interface intuitiva e funcionalidades robustas para otimizar processos e melhorar a eficiência operacional.
 
-First, run the development server:
+## Ideia do Projeto
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+O objetivo principal do sistema é fornecer uma solução completa para empresas que precisam gerenciar seus produtos, fabricantes, vendas e clientes de forma centralizada. Com este sistema, é possível realizar operações como cadastro, edição, exclusão e consulta de dados, além de acompanhar o desempenho das vendas em tempo real.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Funcionalidades
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Gestão de Produtos
+- Cadastro, edição e exclusão de produtos.
+- Controle de estoque e preços.
+- Listagem de itens associados a cada produto.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Gestão de Fabricantes
+- Cadastro, edição e exclusão de fabricantes.
+- Associação de fabricantes aos produtos.
 
-## Learn More
+### Gestão de Vendas
+- Criação de novas vendas com descrição e cliente associado.
+- Adição e remoção de itens em uma venda.
+- Cálculo automático do valor total da venda.
+- Exibição de vendas abertas e fechadas, com destaque visual.
 
-To learn more about Next.js, take a look at the following resources:
+### Gestão de Clientes
+- Cadastro e listagem de clientes.
+- Associação de clientes às vendas.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Autenticação e Segurança
+- Login com validação de token.
+- Redirecionamento automático para a página de login em caso de token inválido.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Relatórios e Informações
+- Exibição de informações detalhadas sobre vendas, incluindo cliente e valor total.
+- Relatórios detalhados para análise de desempenho.
 
-## Deploy on Vercel
+## Tecnologias Utilizadas
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Frontend**: [Next.js](https://nextjs.org), [React](https://reactjs.org), [Tailwind CSS](https://tailwindcss.com)
+- **Backend**: API RESTful integrada com [Axios](https://axios-http.com)
+- **Autenticação**: JWT (JSON Web Token)
+- **Gerenciamento de Estado**: Hooks do React (`useState`, `useEffect`)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Como Executar o Projeto
+
+### Pré-requisitos
+- Node.js instalado na máquina.
+- Gerenciador de pacotes como `npm`, `yarn`, `pnpm` ou `bun`.
+
+### Passos
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/seu-usuario/seu-repositorio.git
+   cd projeto-frontend
+   ```
+
+2. Instale as dependências:
+   ```bash
+   npm install
+   # ou
+   yarn install
+   ```
+
+3. Inicie o servidor de desenvolvimento:
+   ```bash
+   npm run dev
+   # ou
+   yarn dev
+   ```
+
+4. Abra [http://localhost:3000](http://localhost:3000) no navegador para acessar o sistema.
+
+## Estrutura do Projeto
+
+- **`src/app`**: Contém as páginas principais do sistema, como login, produtos, fabricantes e vendas.
+- **`src/components`**: Componentes reutilizáveis, como o layout do cliente.
+- **`src/services`**: Configuração da API para comunicação com o backend.
+- **`src/utils`**: Funções utilitárias, como validação de token.
+
+## Próximos Passos
+
+- Implementar relatórios gráficos para análise de vendas.
+- Adicionar suporte a múltiplos idiomas.
+- Melhorar a experiência do usuário com notificações em tempo real.
+
+## Contribuição
+
+Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou enviar pull requests.
