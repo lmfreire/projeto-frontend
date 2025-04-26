@@ -190,12 +190,48 @@ export default function VendaDetalhadaPage() {
     return <p className="p-8">Carregando...</p>;
   }
 
+  const handleFinalizarVenda = async () => {
+    const empresaId = localStorage.getItem('empresa_id');
+    const token = localStorage.getItem('token_project');
+
+    if (!empresaId || !id) {
+      alert('Erro: Dados ausentes para finalizar a venda.');
+      return;
+    }
+
+    try {
+      await api.patch(`/venda/${empresaId}/${id}`, null, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      alert('Venda finalizada com sucesso!');
+      // Atualiza os dados da venda
+      router.push('/vendas');
+      const { data } = await api.get(`/venda/${empresaId}/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setVendaDetalhada(data);
+    } catch (err) {
+      console.error('Erro ao finalizar venda:', err);
+      alert('Erro ao finalizar venda. Tente novamente.');
+    }
+  };
+
   return (
     <div className="p-8">
-      <button onClick={() => router.back()} className="cursor-pointer text-sm text-gray-600 mb-4 hover:underline">
-        ← Voltar para vendas
-      </button>
-
+      <div className="flex justify-between items-center mb-6">
+        <button onClick={() => router.back()} className="cursor-pointer text-sm text-gray-600 hover:underline">
+          ← Voltar para vendas
+        </button>
+        {vendaDetalhada?.finalizada === false && (
+          <button
+            onClick={handleFinalizarVenda}
+            className="cursor-pointer px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Finalizar Venda
+          </button>
+        )}
+      </div>
 
       <h1 className="text-2xl font-bold mb-6">Detalhes da Venda</h1>
 
