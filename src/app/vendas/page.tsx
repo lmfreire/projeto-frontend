@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "../../services/api";
 import { validateTokenAndRedirect } from "../../utils/auth";
+import jsPDF from 'jspdf';
 
 export default function VendaPage() {
   const [vendas, setVendas] = useState([]);
@@ -106,6 +107,159 @@ export default function VendaPage() {
     }
   };
 
+
+  const handleImprimirRecibo = async (vendaId: number) => {
+    const empresaId = localStorage.getItem('empresa_id');
+    const token = localStorage.getItem('token_project');
+
+    if (!empresaId || !vendaId) {
+      alert('Erro: Dados ausentes para gerar o recibo.');
+      return;
+    }
+
+    try {
+      const { data } = await api.get(`/venda/${empresaId}/${vendaId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const doc = new jsPDF();
+      let y = 10;
+
+      // Cabeçalho
+      doc.setFontSize(18);
+      doc.text(`PEDIDO N. ${data.id}`, 105, y, { align: 'center' });
+      y += 10;
+      doc.setFontSize(14);
+      doc.text(data.empresa.nome, 105, y, { align: 'center' });
+      y += 7;
+      doc.setFontSize(10);
+      doc.text(`Telefone: ${data.empresa.telefone || '(11) 3921-3568'} - E-mail: ${data.empresa.email || 'contatobateriasradial@gmail.com'}`, 105, y, { align: 'center' });
+      y += 10;
+
+      const formatDateToBrasilia = (dateString: string) => {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat('pt-BR', {
+          timeZone: 'America/Sao_Paulo',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }).format(date);
+      };
+
+      const formatTimeToBrasilia = (dateString: string) => {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat('pt-BR', {
+          timeZone: 'America/Sao_Paulo',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }).format(date);
+      };
+
+
+      const dataVendaFormatada = formatDateToBrasilia(data.data_venda);
+      const horaVendaFormatada = formatTimeToBrasilia(data.data_venda);
+
+      // Informações da venda
+      doc.setFontSize(10);
+      const dataVenda = new Date(data.data_venda);
+      doc.text(`DOCUMENTO NÃO FISCAL    ${dataVendaFormatada} ${horaVendaFormatada}    Página: 1`, 10, y);
+      y += 10;
+
+      doc.line(10, y, 200, y); // Linha separadora
+      y += 5;
+
+      // Cliente
+      doc.text(`Cliente....: ${data.cliente.nome}`, 10, y);
+      doc.text(`Código..: ${data.cliente.id}`, 150, y);
+      y += 5;
+      doc.text(`Telefone: ${data.cliente.telefone || ''}`, 10, y);
+      y += 5;
+      doc.text(`Logradouro.: ${data.cliente.endereco || ''}`, 10, y);
+      y += 5;
+      doc.text(`CPF/CNPJ: ${data.cliente.cpf || ''}`, 10, y);
+      y += 5;
+      doc.text(`Vendedor...: ${data.empresa.nome}`, 10, y);
+      doc.text(`Emissão.: ${dataVenda.toLocaleDateString()}`, 150, y);
+      y += 5;
+      if (data.descricao) {
+        doc.text(`Observações: ${data.descricao}`, 10, y);
+        y += 5;
+      }
+
+      doc.line(10, y, 200, y); // Linha separadora
+      y += 5;
+
+      // Cabeçalho da Tabela de Itens
+      doc.setFont('Helvetica', 'bold');
+      doc.text('Código', 10, y);
+      doc.text('Descrição', 40, y);
+      doc.text('Unidade', 100, y);
+      doc.text('Quantidade', 120, y);
+      doc.text('Preço', 150, y);
+      doc.text('Total', 190, y, { align: 'right' });
+      doc.setFont('Helvetica', 'normal');
+      y += 5;
+      doc.line(10, y, 200, y);
+      y += 5;
+
+      // Itens
+      let subtotal = 0;
+      data.VendaItem.forEach((item: any) => {
+        if (y > 270) { // Nova página se passar do limite
+          doc.addPage();
+          y = 10;
+        }
+        doc.text(item.produtoItem.codigo || '', 10, y);
+        doc.text(item.produtoItem.produto.nome, 40, y);
+        doc.text('UN', 100, y);
+        doc.text(`${item.quantidade}`, 125, y);
+        doc.text(`R$ ${Number(item.valor_unitario).toFixed(2)}`, 150, y);
+        doc.text(`R$ ${Number(item.valor_total).toFixed(2)}`, 200, y, { align: 'right' });
+
+        subtotal += Number(item.valor_total);
+        y += 6;
+      });
+
+      doc.line(10, y, 200, y);
+      y += 5;
+
+      // Resumo
+      doc.text(`Itens: ${data.VendaItem.length}`, 10, y);
+      doc.text(`Subtotal: R$ ${subtotal.toFixed(2)}`, 100, y);
+      doc.text(`Desconto: R$ 0,00`, 150, y);
+      y += 5;
+      doc.text(`Total: R$ ${subtotal.toFixed(2)}`, 10, y);
+
+      y += 10;
+
+      // Forma de pagamento
+      doc.line(10, y, 200, y);
+      y += 5;
+      doc.setFont('Helvetica', 'bold');
+      doc.text('Forma de pagamento', 10, y);
+      doc.setFont('Helvetica', 'normal');
+      y += 5;
+      doc.text('Dinheiro', 10, y);
+      doc.text(`R$ ${subtotal.toFixed(2)}`, 150, y);
+
+      y += 10;
+      doc.line(10, y, 200, y);
+      y += 10;
+
+      // Rodapé
+      doc.setFontSize(10);
+      doc.text('EXIJA CUPOM FISCAL OU NOTA FISCAL', 105, y, { align: 'center' });
+
+      // Salvar PDF
+      doc.save(`Pedido_Venda_${vendaId}.pdf`);
+    } catch (err) {
+      console.error('Erro ao gerar recibo:', err);
+      alert('Erro ao gerar recibo. Tente novamente.');
+    }
+  };
+
+
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
@@ -124,9 +278,8 @@ export default function VendaPage() {
             {vendas.map((venda: any) => (
               <li
                 key={venda.id}
-                className={`p-4 rounded shadow cursor-pointer hover:bg-gray-100 ${
-                  venda.finalizada ? "bg-gray-200" : "bg-green-100"
-                }`}
+                className={`p-4 rounded shadow cursor-pointer hover:bg-gray-100 ${venda.finalizada ? "bg-gray-200" : "bg-green-100"
+                  }`}
                 onClick={() => handleVendaClick(venda)}
               >
                 <h2 className="text-lg font-semibold">{venda.descricao}</h2>
@@ -140,12 +293,20 @@ export default function VendaPage() {
                   <strong>Valor Total:</strong> R$ {Number(venda.valor_total).toFixed(2)}
                 </p>
                 <p
-                  className={`text-sm font-bold ${
-                    venda.finalizada ? "text-red-600" : "text-green-600"
-                  }`}
+                  className={`text-sm font-bold ${venda.finalizada ? "text-red-600" : "text-green-600"
+                    }`}
                 >
                   {venda.finalizada ? "Fechada" : "Aberta"}
                 </p>
+
+                {venda.finalizada && (
+                  <button
+                    onClick={() => handleImprimirRecibo(venda.id)}
+                    className="cursor-pointer px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mt-2"
+                  >
+                    Imprimir Recibo
+                  </button>
+                )}
               </li>
             ))}
           </ul>
