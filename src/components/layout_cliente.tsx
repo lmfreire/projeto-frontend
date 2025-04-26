@@ -45,6 +45,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               Fabricantes
             </Link>
             <Link
+              href="/clientes"
+              className="block px-4 py-2 rounded hover:bg-gray-700"
+            >
+              Clientes
+            </Link>
+            <Link
               href="/vendas"
               className="block px-4 py-2 rounded hover:bg-gray-700"
             >
